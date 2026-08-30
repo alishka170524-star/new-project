@@ -8,6 +8,9 @@ import { cn } from "../../lib/cn";
 const navItems = [
   { to: "/", label: "Home" },
   { to: "/tournaments", label: "Tournaments" },
+  { to: "/brackets", label: "Brackets" },
+  { to: "/schedule", label: "Schedule" },
+  { to: "/live", label: "Live" },
   { to: "/players", label: "Players" },
   { to: "/faq", label: "FAQ" },
 ];
@@ -60,12 +63,16 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                     Admin
                   </Button>
                 )}
-                <div className="flex items-center gap-2 rounded-full border border-border py-1 pl-1 pr-3">
+                <Link
+                  to="/profile"
+                  className="flex items-center gap-2 rounded-full border border-border py-1 pl-1 pr-3 cursor-pointer transition-colors duration-150 hover:border-primary/50"
+                  aria-label="My account"
+                >
                   <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
                     {profile.name?.[0]?.toUpperCase() ?? <UserIcon className="h-4 w-4" />}
                   </span>
                   <span className="text-sm font-medium">{profile.name}</span>
-                </div>
+                </Link>
                 <Button variant="ghost" size="sm" onClick={() => signOut()}>
                   Sign out
                 </Button>
@@ -142,6 +149,13 @@ export function PublicLayout({ children }: { children: ReactNode }) {
                     Admin area
                   </NavLink>
                 )}
+                <NavLink
+                  to="/profile"
+                  onClick={closeMenu}
+                  className="rounded-md px-3 py-2.5 text-sm font-medium text-muted cursor-pointer hover:text-foreground"
+                >
+                  My account
+                </NavLink>
                 <button
                   type="button"
                   onClick={() => {

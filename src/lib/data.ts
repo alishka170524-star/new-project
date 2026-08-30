@@ -196,6 +196,99 @@ export async function fetchMatches(tournamentId: string) {
   return data;
 }
 
+export interface MatchWithJoins {
+  id: string;
+  tournament_id: string;
+  round_no: number;
+  match_no: number;
+  entry_a_id: string | null;
+  entry_b_id: string | null;
+  player_a_id: string | null;
+  player_b_id: string | null;
+  table_id: string | null;
+  scheduled_at: string | null;
+  score_a: number;
+  score_b: number;
+  status: string;
+  on_tv: boolean;
+  tv_position: number | null;
+  tournaments?: { id: string; name: string; slug: string } | null;
+  players_a?: Player | null;
+  players_b?: Player | null;
+  tables?: Table | null;
+  entries_a?: { id: string } | null;
+  entries_b?: { id: string } | null;
+}
+
+/** All matches for the public schedule page, optionally filtered by tournament. */
+export async function fetchScheduleMatches(tournamentId?: string): Promise<MatchWithJoins[]> {
+  let q = supabase
+    .from("matches")
+    .select("*, tournaments(id, name, slug), players_a:players!player_a_id(*), players_b:players!player_b_id(*), tables(*), entries_a:tournament_entries!entry_a_id(id), entries_b:tournament_entries!entry_b_id(id)")
+    .order("scheduled_at", { ascending: true, nullsFirst: false })
+    .order("match_no");
+  if (tournamentId) q = q.eq("tournament_id", tournamentId);
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+  return data as MatchWithJoins[];
+}
+
+/** Live + scheduled matches for the live scores page (status live or scheduled). */
+export async function fetchLiveMatches(tournamentId?: string): Promise<MatchWithJoins[]> {
+  let q = supabase
+    .from("matches")
+    .select("*, tournaments(id, name, slug), players_a:players!player_a_id(*), players_b:players!player_b_id(*), tables(*), entries_a:tournament_entries!entry_a_id(id), entries_b:tournament_entries!entry_b_id(id)")
+    .in("status", ["live", "scheduled"])
+    .order("status")
+    .order("scheduled_at", { ascending: true, nullsFirst: false });
+  if (tournamentId) q = q.eq("tournament_id", tournamentId);
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+  return data as MatchWithJoins[];
+}
+
+/** Tournaments with a confirmed draw for the brackets list page. */
+export async function fetchBracketsList() {
+  const { data, error } = await supabase
+    .from("tournaments")
+    .select("*, disciplines(name, color, icon)")
+    .not("status", "in", '("setup","cancelled")')
+    .order("start_date", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data as (Tournament & { disciplines: Discipline | null })[];
+}
+
+export async function fetchDisciplineBySlug(slugOrCode: string) {
+  const { data, error } = await supabase
+    .from("disciplines")
+    .select("*")
+    .or(`code.eq.${slugOrCode},name.ilike.%${slugOrCode}%`)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data as Discipline | null;
+}
+
+export async function fetchTournamentsByDiscipline(disciplineId: string) {
+  const { data, error } = await supabase
+    .from("tournaments")
+    .select("*, disciplines(name, color, icon)")
+    .eq("discipline_id", disciplineId)
+    .not("status", "in", '("cancelled")')
+    .order("start_date", { ascending: false });
+  if (error) throw new Error(error.message);
+  return data as (Tournament & { disciplines: Discipline | null })[];
+}
+
+export async function fetchMatchDetails(matchId: string) {
+  const { data, error } = await supabase
+    .from("match_details")
+    .select("*")
+    .eq("match_id", matchId)
+    .order("leg_no");
+  if (error) throw new Error(error.message);
+  return data;
+}
+
 export async function fetchMyPlayer(userId: string): Promise<Player | null> {
   const { data, error } = await supabase
     .from("players")
