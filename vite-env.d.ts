@@ -14,3 +14,14 @@ declare module '*.svg?import&react' {
   const src: string;
   export default src;
 }
+
+/*
+ * lucide-react ships its type declarations at the package root
+ * (dist/lucide-react.d.ts) but its CJS main has no sibling .d.ts, which
+ * breaks `moduleResolution: bundler` resolution after a fresh install.
+ * Re-export the shipped ESM types so every `import { Icon } from
+ * "lucide-react"` stays typed.
+ */
+declare module 'lucide-react' {
+  export * from 'lucide-react/dist/lucide-react';
+}

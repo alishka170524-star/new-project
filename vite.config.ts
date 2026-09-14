@@ -37,4 +37,17 @@ export default defineConfig(() => ({
     allowedHosts: true as const,
     hmr: false,
   },
+  build: {
+    // Split vendor libraries into long-cacheable chunks — better TTFB on
+    // Cloudflare Pages and silences the >500 kB chunk warning.
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          icons: ['lucide-react', 'react-icons'],
+          map: ['leaflet', 'react-leaflet'],
+        },
+      },
+    },
+  },
 }))
